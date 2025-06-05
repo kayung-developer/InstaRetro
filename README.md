@@ -2,6 +2,13 @@
 
 InstaRetro is a feature-rich, single-page web application designed to mimic the core functionalities of Instagram. It's built using React (via CDN) for the frontend and Firebase for backend services, including authentication, database (Firestore), and file storage. This "Ultimate Edition" aims to provide a comprehensive set of features found in modern social media applications.
 
+
+## Screenshot
+
+<img src="https://github.com/user-attachments/assets/2884d986-a47b-4956-87c2-d9e74384635d/index" width="400" height="200"/>
+
+
+
 ## Features
 
 *   **Authentication:**
