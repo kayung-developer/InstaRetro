@@ -4,8 +4,8 @@ InstaRetro is a feature-rich, single-page web application designed to mimic the 
 
 
 ## Screenshot
+![index](https://github.com/user-attachments/assets/a68f3b13-1f68-4cdd-8465-61016a2eee36)
 
-<img src="https://github.com/user-attachments/assets/2884d986-a47b-4956-87c2-d9e74384635d/index" width="400" height="200"/>
 
 
 
