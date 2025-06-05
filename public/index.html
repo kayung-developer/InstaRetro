@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaRetro :: Ultimate Edition</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #4A4A4A;
+            --secondary-color: #F5F5F5;
+            --accent-color: #E67E22;
+            --text-color: #333333;
+            --border-color: #D1D1D1;
+            --shadow-color: rgba(0,0,0,0.15);
+            --font-family: 'San Francisco', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            --app-width: 390px;
+            --header-height: 50px;
+            --nav-bar-height: 55px;
+        }
+        body{margin:0;font-family:var(--font-family);background-color:#CDCDCD;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding-top:15px;color:var(--text-color)}
+        #root{width:var(--app-width);max-height:844px;height:calc(100vh - 30px);background-color:var(--secondary-color);border:1px solid #A0A0A0;box-shadow:0 10px 30px var(--shadow-color),0 0 0 8px rgba(0,0,0,.03);border-radius:25px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+        .icon{font-family:'Segoe UI Symbol','Apple Symbols','Noto Color Emoji',sans-serif;font-size:22px;cursor:pointer;color:var(--primary-color);transition:color .2s,transform .1s;padding:5px;display:inline-block}
+        .icon:hover{color:var(--accent-color)}.icon:active{transform:scale(.92)}
+        .app-header{display:flex;justify-content:space-between;align-items:center;padding:0 15px;height:var(--header-height);border-bottom:1px solid var(--border-color);background-color:#EFEFEF;box-shadow:0 1px 3px rgba(0,0,0,.05);flex-shrink:0}
+        .app-header-logo{font-family:'Billabong','Brush Script MT',cursive;font-size:30px;color:var(--text-color);font-weight:500}
+        @font-face{font-family:'Billabong';src:url(https://cdn.rawgit.com/milktronics/Instagram-Logo-Font/master/Billabong.woff2) format('woff2'),url(https://cdn.rawgit.com/milktronics/Instagram-Logo-Font/master/Billabong.woff) format('woff');font-weight:normal;font-style:normal}
+        .app-header-actions{display:flex;gap:18px}.app-header-actions .icon{font-size:24px}
+        .main-content-area{flex-grow:1;overflow-y:auto;background-color:var(--secondary-color);display:flex;flex-direction:column}
+        .main-content-area::-webkit-scrollbar{width:5px}.main-content-area::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}.main-content-area::-webkit-scrollbar-track{background:var(--secondary-color)}
+        .stories-bar{padding:12px 0 12px 15px;display:flex;overflow-x:auto;border-bottom:1px solid var(--border-color);background-color:#FAFAFA;scrollbar-width:none;flex-shrink:0}
+        .stories-bar::-webkit-scrollbar{display:none}.story-item{text-align:center;margin-right:18px;cursor:pointer}
+        .story-avatar{width:64px;height:64px;border-radius:50%;border:2px solid transparent;background-image:linear-gradient(white,white),radial-gradient(circle at top right,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);background-origin:border-box;background-clip:content-box,border-box;padding:3px;display:flex;justify-content:center;align-items:center}
+        .story-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid white}
+        .story-username{font-size:12px;margin-top:6px;color:#555;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .post-item{border-bottom:1px solid var(--border-color);background-color:#FFF}
+        .post-header{display:flex;align-items:center;padding:10px 15px}
+        .post-user-avatar{width:36px;height:36px;border-radius:50%;margin-right:12px;border:1px solid #eee}
+        .post-username{font-weight:600;font-size:14px}.post-location{font-size:11px;color:#777;margin-left:5px}
+        .post-options{margin-left:auto;font-size:22px;color:#888;cursor:pointer;padding:5px}
+        .post-media-container{width:100%;max-height:480px;background-color:#111;display:flex;justify-content:center;align-items:center;overflow:hidden}
+        .post-media-container video,.post-media-container img{max-width:100%;max-height:100%;display:block;object-fit:contain}
+        .post-actions{display:flex;padding:8px 15px;gap:18px;align-items:center}
+        .post-actions .icon{font-size:24px}.post-actions .icon.liked{color:#ED4956}
+        .post-actions .icon-save{margin-left:auto}
+        .post-stats{padding:0 15px 5px;font-size:14px}.post-stats .likes{font-weight:600}
+        .post-caption{padding:0 15px 8px;font-size:14px;line-height:1.45}
+        .post-caption .username{font-weight:600;margin-right:5px}
+        .post-comments-link{padding:0 15px 8px;font-size:14px;color:#888;cursor:pointer}
+        .post-timestamp{padding:0 15px 12px;font-size:10px;color:#aaa;text-transform:uppercase}
+        .nav-bar{display:flex;justify-content:space-around;align-items:center;height:var(--nav-bar-height);padding:5px 0;border-top:1px solid var(--border-color);background-color:#F9F9F9;box-shadow:0 -1px 3px rgba(0,0,0,.04);flex-shrink:0}
+        .nav-item .icon{font-size:26px;padding:8px 12px}.nav-item .icon.active{color:var(--accent-color);font-weight:bold}
+        .nav-item .profile-icon img{width:28px;height:28px;border-radius:50%;border:1px solid var(--primary-color)}
+        .nav-item .profile-icon.active img{border-color:var(--accent-color);border-width:2px}
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.55);display:flex;justify-content:center;align-items:center;z-index:1000;animation:fadeIn .3s ease}
+        .modal-content{background-color:var(--secondary-color);padding:20px;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,.2);width:90%;max-width:360px;animation:slideUp .3s ease-out}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+        .modal-title{font-size:18px;font-weight:600}
+        .modal-close-btn{font-size:24px;background:none;border:none;cursor:pointer;color:#777;padding:5px}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .button{padding:10px 18px;font-size:15px;font-weight:500;border-radius:8px;border:1px solid var(--border-color);cursor:pointer;transition:background-color .2s,box-shadow .2s;background-color:#E0E0E0;color:var(--text-color);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+        .button:hover{background-color:#D5D5D5}
+        .button-primary{background-color:var(--accent-color);color:#fff;border-color:var(--accent-color);box-shadow:0 2px 4px rgba(0,0,0,.15)}
+        .button-primary:hover{background-color:#D96D1A}
+        .form-input,.form-textarea{width:calc(100% - 22px);padding:10px;margin-bottom:15px;border:1px solid var(--border-color);border-radius:6px;font-size:14px;background-color:#FFF;box-shadow:inset 0 1px 2px rgba(0,0,0,.05)}
+        .form-textarea{min-height:80px;resize:vertical}
+        .login-view{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;padding:30px;background-color:var(--secondary-color)}
+        .login-logo{font-family:'Billabong',cursive;font-size:50px;margin-bottom:30px}
+        .login-form .form-input{margin-bottom:15px}.login-form .button{width:100%;margin-top:10px}
+        .login-error{color:red;font-size:13px;margin-bottom:10px;text-align:center}
+        .search-view{padding:15px}.search-bar{display:flex;margin-bottom:15px}
+        .search-bar input{flex-grow:1;padding:10px 15px;border:1px solid var(--border-color);border-radius:20px;font-size:14px;background-color:#EAEAEA}
+        .search-user-item{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #eee;cursor:pointer}
+        .search-user-item img{width:40px;height:40px;border-radius:50%;margin-right:10px}
+        .search-user-item .username{font-weight:500}.search-user-item .fullname{font-size:13px;color:#777}
+        .profile-page{background-color:#FAFAFA}
+        .profile-header{padding:20px 15px;display:flex;align-items:center;border-bottom:1px solid var(--border-color)}
+        .profile-avatar-large{width:80px;height:80px;border-radius:50%;margin-right:25px;border:1px solid #ccc;object-fit:cover}
+        .profile-info{flex-grow:1}.profile-username-large{font-size:20px;font-weight:300;margin-bottom:8px}
+        .profile-actions .button{font-size:13px;padding:6px 12px;margin-right:10px}
+        .profile-stats{display:flex;justify-content:space-around;padding:12px 0;border-bottom:1px solid var(--border-color);margin-top:10px}
+        .profile-stat-item{text-align:center}.profile-stat-item .count{font-size:16px;font-weight:600}
+        .profile-stat-item .label{font-size:13px;color:#888}
+        .profile-bio-section{padding:15px;font-size:14px;line-height:1.5;border-bottom:1px solid var(--border-color)}
+        .profile-bio-section .fullname{font-weight:600}
+        .profile-grid-controls{display:flex;justify-content:space-around;border-bottom:1px solid var(--border-color)}
+        .profile-grid-controls .icon{padding:12px;font-size:22px;color:#AAA}
+        .profile-grid-controls .icon.active{color:var(--primary-color);border-bottom:2px solid var(--primary-color)}
+        .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px}
+        .profile-grid-item{aspect-ratio:1/1;background-color:#E0E0E0;display:flex;justify-content:center;align-items:center;overflow:hidden}
+        .profile-grid-item img,.profile-grid-item video{width:100%;height:100%;object-fit:cover}
+        .comments-modal .modal-content{max-height:70vh;display:flex;flex-direction:column}
+        .comments-list{flex-grow:1;overflow-y:auto;margin-bottom:15px}
+        .comment-item{display:flex;margin-bottom:12px;font-size:13px}
+        .comment-item img{width:30px;height:30px;border-radius:50%;margin-right:10px}
+        .comment-text-container{background-color:#ECECEC;padding:8px 12px;border-radius:15px}
+        .comment-text-container .username{font-weight:600;margin-right:5px}
+        .comment-timestamp{font-size:10px;color:#999;margin-left:5px}
+        .comment-input-area{display:flex;align-items:center;border-top:1px solid var(--border-color);padding-top:10px}
+        .comment-input-area .form-input{margin-bottom:0;flex-grow:1;border-radius:20px;padding-left:15px}
+        .comment-input-area .button{margin-left:10px;padding:8px 12px;font-size:13px}
+        .activity-view{padding:10px 0}
+        .activity-item{display:flex;align-items:center;padding:10px 15px;border-bottom:1px solid #eee;font-size:14px}
+        .activity-item img{width:40px;height:40px;border-radius:50%;margin-right:12px;object-fit:cover}
+        .activity-item .activity-text{flex-grow:1}.activity-item .activity-text .username{font-weight:600}
+        .activity-item .activity-timestamp{font-size:11px;color:#999;margin-left:8px}
+        .activity-item .post-thumbnail{width:40px;height:40px;object-fit:cover;margin-left:10px;border-radius:4px}
+        .messages-list-view{padding:15px}
+        .message-user-item{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #eee;cursor:pointer}
+        .message-user-item img{width:50px;height:50px;border-radius:50%;margin-right:12px}
+        .message-info{flex-grow:1}.message-info .username{font-weight:500;font-size:15px}
+        .message-info .last-message{font-size:13px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+        .message-timestamp{font-size:12px;color:#999}
+        .chat-view{display:flex;flex-direction:column;height:100%}
+        .chat-header{padding:10px 15px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;background-color:#EFEFEF;flex-shrink:0}
+        .chat-header img{width:30px;height:30px;border-radius:50%;margin-right:10px}
+        .chat-header .username{font-weight:600}
+        .chat-back-button{margin-right:15px;font-size:20px;cursor:pointer}
+        .chat-messages{flex-grow:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column-reverse} /* Reverse for new messages at bottom */
+        .chat-message{display:flex;margin-bottom:10px;max-width:75%}
+        .chat-message.sent{margin-left:auto;flex-direction:row-reverse}
+        .chat-message.received{margin-right:auto}
+        .chat-message-bubble{padding:8px 12px;border-radius:18px;font-size:14px;line-height:1.4}
+        .chat-message.sent .chat-message-bubble{background-color:var(--accent-color);color:#fff;border-bottom-right-radius:4px}
+        .chat-message.received .chat-message-bubble{background-color:#E5E5EA;color:var(--text-color);border-bottom-left-radius:4px}
+        .chat-message-timestamp{font-size:10px;color:#999;margin:2px 5px 0 5px}
+        .chat-input-area{display:flex;padding:10px 15px;border-top:1px solid var(--border-color);background-color:#F9F9F9;flex-shrink:0}
+        .chat-input-area .form-input{flex-grow:1;margin-bottom:0;border-radius:20px;padding:8px 15px}
+        .chat-input-area .button{margin-left:10px;padding:8px 15px;border-radius:20px}
+        .loader{border:4px solid #f3f3f3;border-top:4px solid var(--accent-color);border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;margin:20px auto}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- Global Constants & Context ---
+        const AppContext = React.createContext();
+        const DEFAULT_USER_PIC = "https://picsum.photos/seed/defaultuser/100/100";
+
+        // --- Firebase Initialization ---
+        // IMPORTANT: Replace with your Firebase project configuration
+        /*const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };*/
+        const firebaseConfig = {
+            apiKey: "AIzaSyBCKy81n8qZHAE_2exzgK9E3tmNr_gioOU",
+            authDomain: "instaflix-5fca0.firebaseapp.com",
+            projectId: "instaflix-5fca0",
+            storageBucket: "instaflix-5fca0.firebasestorage.app",
+            messagingSenderId: "607635923770",
+            appId: "1:607635923770:web:10552798cb6445f8a4a603",
+            measurementId: "G-H9SGTBQKMG"
+        };
+
+        let firebaseApp;
+        let firebaseAuth;
+        let firestoreDB;
+        let firebaseStorage;
+
+        try {
+            if (firebase.apps.length === 0) {
+                firebaseApp = firebase.initializeApp(firebaseConfig);
+            } else {
+                firebaseApp = firebase.app();
+            }
+            firebaseAuth = firebase.auth();
+            firestoreDB = firebase.firestore();
+            firebaseStorage = firebase.storage();
+            console.log("Firebase Initialized Successfully");
+        } catch (error) {
+            console.error("Firebase Initialization Error:", error);
+            // Display a critical error to the user if Firebase doesn't load
+            document.getElementById('root').innerHTML = `
+                <div style="padding: 20px; text-align: center; color: red;">
+                    <h2>Application Error</h2>
+                    <p>Could not connect to backend services. Please check your internet connection or try again later.</p>
+                    <p><em>Details: Firebase initialization failed. Ensure configuration is correct.</em></p>
+                </div>
+            `;
+        }
+
+        // --- Firebase Service Layer ---
+        // IMPORTANT: Implement Firebase Security Rules for production applications.
+        // These rules would be set in the Firebase console, not here.
+        // Example rules:
+        // rules_version = '2';
+        // service cloud.firestore {
+        //   match /databases/{database}/documents {
+        //     match /users/{userId} {
+        //       allow read;
+        //       allow write: if request.auth.uid == userId;
+        //     }
+        //     match /posts/{postId} {
+        //       allow read;
+        //       allow create: if request.auth.uid == request.resource.data.userId;
+        //       allow update, delete: if request.auth.uid == resource.data.userId;
+        //     }
+        //     // ... other rules for likes, comments, followers, chat etc.
+        //   }
+        // }
+        // service firebase.storage {
+        //   match /b/{bucket}/o {
+        //     match /{allPaths=**} {
+        //       allow read;
+        //       allow write: if request.auth != null && request.resource.size < 5 * 1024 * 1024 // Example: authenticated users, max 5MB
+        //                    && request.resource.contentType.matches('image/.*|video/.*');
+        //     }
+        //   }
+        // }
+
+        const firebaseService = {
+            // AUTH
+            onAuthStateChangedListener: (callback) => firebaseAuth.onAuthStateChanged(callback),
+
+            signUpWithEmail: async (email, password, username, fullname) => {
+                const userCredential = await firebaseAuth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                // Create user profile in Firestore
+                await firestoreDB.collection('users').doc(user.uid).set({
+                    uid: user.uid,
+                    username,
+                    email: user.email,
+                    fullname,
+                    profilePicUrl: DEFAULT_USER_PIC,
+                    bio: '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    followersCount: 0,
+                    followingCount: 0,
+                });
+                return { uid: user.uid, email: user.email, username, profilePicUrl: DEFAULT_USER_PIC, fullname };
+            },
+            signInWithEmail: async (email, password) => {
+                const userCredential = await firebaseAuth.signInWithEmailAndPassword(email, password);
+                return userCredential.user; // Raw firebase user object
+            },
+            signOutUser: () => firebaseAuth.signOut(),
+
+            getUserProfileById: async (uid) => {
+                const userDoc = await firestoreDB.collection('users').doc(uid).get();
+                return userDoc.exists ? { id: userDoc.id, ...userDoc.data() } : null;
+            },
+
+            // POSTS
+            createPost: async (userId, { contentUrl, contentType, thumbnailUrl, caption, location }) => {
+                const postsCollection = firestoreDB.collection('posts');
+                const newPostRef = await postsCollection.add({
+                    userId,
+                    contentUrl,
+                    contentType,
+                    thumbnailUrl: thumbnailUrl || (contentType === 'image' ? contentUrl : null),
+                    caption,
+                    location,
+                    likesCount: 0,
+                    commentsCount: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+                 // Update user's post count (example, can be done via cloud function too)
+                const userRef = firestoreDB.collection('users').doc(userId);
+                await userRef.update({ postsCount: firebase.firestore.FieldValue.increment(1) });
+
+                const newPostDoc = await newPostRef.get();
+                return { id: newPostDoc.id, ...newPostDoc.data() };
+            },
+
+            getPosts: async (currentUserId) => {
+                const snapshot = await firestoreDB.collection('posts')
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+
+                const posts = await Promise.all(snapshot.docs.map(async doc => {
+                    const post = { id: doc.id, ...doc.data() };
+                    const userDoc = await firestoreDB.collection('users').doc(post.userId).get();
+                    if (userDoc.exists) {
+                        post.user_username = userDoc.data().username;
+                        post.user_profile_pic_url = userDoc.data().profilePicUrl;
+                    }
+                    if (currentUserId) {
+                        const likeDoc = await firestoreDB.collection('likes').doc(`${currentUserId}_${post.id}`).get();
+                        post.isLiked = likeDoc.exists;
+                        const saveDoc = await firestoreDB.collection('saved_posts').doc(`${currentUserId}_${post.id}`).get();
+                        post.isSaved = saveDoc.exists;
+                    }
+                    return post;
+                }));
+                return posts;
+            },
+
+            // Note: More specific post fetching (e.g., getPostById) would be needed for PostDetailModal
+
+            toggleLikePost: async (postId, userId) => {
+                const likeRef = firestoreDB.collection('likes').doc(`${userId}_${postId}`);
+                const postRef = firestoreDB.collection('posts').doc(postId);
+                const likeDoc = await likeRef.get();
+                let liked;
+
+                const postOwnerDoc = await postRef.get();
+                const postOwnerId = postOwnerDoc.data()?.userId;
+
+                if (likeDoc.exists) {
+                    await likeRef.delete();
+                    await postRef.update({ likesCount: firebase.firestore.FieldValue.increment(-1) });
+                    liked = false;
+                } else {
+                    await likeRef.set({ userId, postId, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await postRef.update({ likesCount: firebase.firestore.FieldValue.increment(1) });
+                    liked = true;
+                    // Notification for like
+                    if (postOwnerId && postOwnerId !== userId) {
+                        await firebaseService.createNotification(postOwnerId, userId, 'like', postId);
+                    }
+                }
+                const updatedPostDoc = await postRef.get();
+                return { liked, newLikesCount: updatedPostDoc.data().likesCount };
+            },
+
+            toggleSavePost: async (postId, userId) => {
+                 const saveRef = firestoreDB.collection('saved_posts').doc(`${userId}_${postId}`);
+                 const saveDoc = await saveRef.get();
+                 let saved;
+                 if (saveDoc.exists) {
+                     await saveRef.delete();
+                     saved = false;
+                 } else {
+                     await saveRef.set({ userId, postId, savedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                     saved = true;
+                 }
+                 return { saved };
+            },
+
+            // COMMENTS
+            getComments: (postId, callback) => { // Real-time listener
+                return firestoreDB.collection('comments')
+                    .where('postId', '==', postId)
+                    .orderBy('createdAt', 'asc')
+                    .onSnapshot(async snapshot => {
+                        const comments = await Promise.all(snapshot.docs.map(async doc => {
+                            const comment = { id: doc.id, ...doc.data() };
+                            const userDoc = await firestoreDB.collection('users').doc(comment.userId).get();
+                             if (userDoc.exists) {
+                                comment.user_username = userDoc.data().username;
+                                comment.user_profile_pic_url = userDoc.data().profilePicUrl;
+                            }
+                            return comment;
+                        }));
+                        callback(comments);
+                    });
+            },
+            addComment: async (postId, userId, text) => {
+                const commentRef = await firestoreDB.collection('comments').add({
+                    postId,
+                    userId,
+                    text,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await firestoreDB.collection('posts').doc(postId).update({
+                    commentsCount: firebase.firestore.FieldValue.increment(1)
+                });
+
+                const postOwnerDoc = await firestoreDB.collection('posts').doc(postId).get();
+                const postOwnerId = postOwnerDoc.data()?.userId;
+                if (postOwnerId && postOwnerId !== userId) {
+                     await firebaseService.createNotification(postOwnerId, userId, 'comment', postId, commentRef.id, text.substring(0, 50));
+                }
+                // Basic @mention notification (can be improved with Cloud Functions for robustness)
+                const mentions = text.match(/@(\w+)/g);
+                if (mentions) {
+                    for (const mention of mentions) {
+                        const username = mention.substring(1);
+                        const usersQuery = await firestoreDB.collection('users').where('username', '==', username).limit(1).get();
+                        if (!usersQuery.empty) {
+                            const mentionedUser = usersQuery.docs[0].data();
+                            if (mentionedUser.uid !== userId && mentionedUser.uid !== postOwnerId) {
+                                await firebaseService.createNotification(mentionedUser.uid, userId, 'mention', postId, commentRef.id, text.substring(0,50));
+                            }
+                        }
+                    }
+                }
+
+                const newCommentDoc = await commentRef.get();
+                const newComment = { id: newCommentDoc.id, ...newCommentDoc.data() };
+                const userDoc = await firestoreDB.collection('users').doc(newComment.userId).get();
+                if (userDoc.exists) {
+                    newComment.user_username = userDoc.data().username;
+                    newComment.user_profile_pic_url = userDoc.data().profilePicUrl;
+                }
+                return newComment;
+            },
+
+            // USERS & PROFILE
+            getUserProfileByUsername: async (username, currentUserId) => {
+                const usersQuery = await firestoreDB.collection('users').where('username', '==', username).limit(1).get();
+                if (usersQuery.empty) return null;
+
+                const userDoc = usersQuery.docs[0];
+                const user = { id: userDoc.id, ...userDoc.data() };
+
+                const postsSnapshot = await firestoreDB.collection('posts')
+                    .where('userId', '==', user.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                user.posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                user.postsCount = user.posts.length; // Or use the stored postsCount if reliable
+
+                // Follower/Following counts are already on user doc, but check if current user isFollowing
+                if (currentUserId && currentUserId !== user.uid) {
+                    const followDoc = await firestoreDB.collection('followers').doc(`${currentUserId}_${user.uid}`).get();
+                    user.isFollowing = followDoc.exists;
+                } else {
+                    user.isFollowing = null; // Own profile or no current user
+                }
+                return user;
+            },
+            updateUserProfile: async (userId, { fullname, bio, profilePicUrl }) => {
+                const dataToUpdate = {};
+                if (fullname !== undefined) dataToUpdate.fullname = fullname;
+                if (bio !== undefined) dataToUpdate.bio = bio;
+                if (profilePicUrl !== undefined) dataToUpdate.profilePicUrl = profilePicUrl;
+
+                if (Object.keys(dataToUpdate).length > 0) {
+                    await firestoreDB.collection('users').doc(userId).update(dataToUpdate);
+                }
+                return firebaseService.getUserProfileById(userId);
+            },
+            searchUsers: async (query) => {
+                if (!query) return [];
+                 // Firestore doesn't support partial string matches directly like SQL LIKE.
+                 // A common workaround is to query for 'greater than or equal to' query and 'less than or equal to' query + '\uf8ff'.
+                 // For simpler demo, use exact match or set up Algolia/Elasticsearch for advanced search.
+                 // This example will search by username starting with query (case-sensitive).
+                const snapshot = await firestoreDB.collection('users')
+                    .where('username', '>=', query)
+                    .where('username', '<=', query + '\uf8ff')
+                    .limit(10)
+                    .get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            },
+             toggleFollowUser: async (currentUserId, targetUserId) => {
+                const followRef = firestoreDB.collection('followers').doc(`${currentUserId}_${targetUserId}`);
+                const followerUserRef = firestoreDB.collection('users').doc(currentUserId);
+                const followingUserRef = firestoreDB.collection('users').doc(targetUserId);
+                const followDoc = await followRef.get();
+                let isFollowing;
+
+                if (followDoc.exists) { // Unfollow
+                    await followRef.delete();
+                    await followerUserRef.update({ followingCount: firebase.firestore.FieldValue.increment(-1) });
+                    await followingUserRef.update({ followersCount: firebase.firestore.FieldValue.increment(-1) });
+                    isFollowing = false;
+                } else { // Follow
+                    await followRef.set({ followerId: currentUserId, followingId: targetUserId, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    await followerUserRef.update({ followingCount: firebase.firestore.FieldValue.increment(1) });
+                    await followingUserRef.update({ followersCount: firebase.firestore.FieldValue.increment(1) });
+                    isFollowing = true;
+                    // Notification for follow
+                    await firebaseService.createNotification(targetUserId, currentUserId, 'follow');
+                }
+                return { isFollowing };
+            },
+
+            // FILE UPLOAD (Firebase Storage)
+            uploadFile: async (file, path) => {
+                const storageRef = firebaseStorage.ref();
+                const fileRef = storageRef.child(`${path}/${uuid.v4()}_${file.name}`);
+                await fileRef.put(file);
+                const downloadURL = await fileRef.getDownloadURL();
+                return downloadURL;
+            },
+            // NOTIFICATIONS
+            createNotification: async (targetUserId, actorId, type, postId = null, commentId = null, message = null) => {
+                return firestoreDB.collection('notifications').add({
+                    userId: targetUserId, // User receiving notification
+                    actorId, // User who performed action
+                    type, // 'like', 'comment', 'follow', 'mention'
+                    postId,
+                    commentId,
+                    message,
+                    isRead: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            },
+            getNotifications: (userId, callback) => { // Real-time
+                 return firestoreDB.collection('notifications')
+                    .where('userId', '==', userId)
+                    .orderBy('createdAt', 'desc')
+                    .limit(30)
+                    .onSnapshot(async snapshot => {
+                        const notifications = await Promise.all(snapshot.docs.map(async doc => {
+                            const n = { id: doc.id, ...doc.data() };
+                            const actorDoc = await firestoreDB.collection('users').doc(n.actorId).get();
+                            if(actorDoc.exists) {
+                                n.actor_username = actorDoc.data().username;
+                                n.actor_profile_pic_url = actorDoc.data().profilePicUrl;
+                            }
+                            if (n.postId) {
+                                const postDoc = await firestoreDB.collection('posts').doc(n.postId).get();
+                                if (postDoc.exists) {
+                                     n.post_thumbnail_url = postDoc.data().thumbnailUrl || postDoc.data().contentUrl;
+                                     n.post_content_type = postDoc.data().contentType;
+                                }
+                            }
+                            return n;
+                        }));
+                        callback(notifications);
+                    });
+            },
+            markNotificationsAsRead: async (userId, notificationIds = []) => {
+                 const batch = firestoreDB.batch();
+                 if (notificationIds.length > 0) {
+                     notificationIds.forEach(id => {
+                         const notifRef = firestoreDB.collection('notifications').doc(id);
+                         batch.update(notifRef, { isRead: true });
+                     });
+                 } else { // Mark all (example, might need pagination in real app)
+                     const unreadNotifs = await firestoreDB.collection('notifications').where('userId', '==', userId).where('isRead', '==', false).get();
+                     unreadNotifs.docs.forEach(doc => batch.update(doc.ref, { isRead: true }));
+                 }
+                 await batch.commit();
+            },
+            // CHAT
+            getChatRoomsForUser: (userId, callback) => {
+                return firestoreDB.collection('chatRooms')
+                    .where('participants', 'array-contains', userId)
+                    .orderBy('lastMessageTimestamp', 'desc')
+                    .onSnapshot(async snapshot => {
+                        const chatRooms = await Promise.all(snapshot.docs.map(async doc => {
+                            const room = { id: doc.id, ...doc.data() };
+                            const otherParticipantId = room.participants.find(pId => pId !== userId);
+                            if (otherParticipantId) {
+                                const userDoc = await firebaseService.getUserProfileById(otherParticipantId);
+                                room.otherUser = userDoc;
+                            }
+                            return room;
+                        }));
+                        callback(chatRooms.filter(room => room.otherUser)); // Ensure other user data is fetched
+                    });
+            },
+            getMessagesForChatRoom: (chatRoomId, callback) => {
+                return firestoreDB.collection('chatRooms').doc(chatRoomId).collection('messages')
+                    .orderBy('createdAt', 'asc') // Show oldest first, then reverse in UI for display
+                    .limitToLast(50) // Get last 50 messages
+                    .onSnapshot(snapshot => {
+                        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        callback(messages);
+                    });
+            },
+            sendMessage: async (chatRoomId, senderId, text) => {
+                 const messageData = {
+                    senderId,
+                    text,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                await firestoreDB.collection('chatRooms').doc(chatRoomId).collection('messages').add(messageData);
+                await firestoreDB.collection('chatRooms').doc(chatRoomId).update({
+                    lastMessageText: text.substring(0, 50), // Truncate for preview
+                    lastMessageSenderId: senderId,
+                    lastMessageTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            },
+            findOrCreateChatRoom: async (currentUserId, otherUserId) => {
+                // Generate a consistent chat room ID
+                const participants = [currentUserId, otherUserId].sort();
+                const chatRoomId = participants.join('_');
+                const chatRoomRef = firestoreDB.collection('chatRooms').doc(chatRoomId);
+                const doc = await chatRoomRef.get();
+
+                if (doc.exists) {
+                    return chatRoomId;
+                } else {
+                    await chatRoomRef.set({
+                        participants: participants,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageText: '',
+                        lastMessageTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    return chatRoomId;
+                }
+            },
+             // STORIES (Basic implementation with Firestore)
+            getStoriesForFeed: async (currentUserId) => {
+                // Get stories from users the current user is following, plus own stories (if any)
+                // This is a simplified version. Real story feeds are complex.
+                const followingSnapshot = await firestoreDB.collection('followers')
+                    .where('followerId', '==', currentUserId)
+                    .get();
+
+                let userIdsToFetchStories = [currentUserId]; // Include own stories
+                followingSnapshot.docs.forEach(doc => userIdsToFetchStories.push(doc.data().followingId));
+
+                userIdsToFetchStories = [...new Set(userIdsToFetchStories)]; // Unique IDs
+
+                if (userIdsToFetchStories.length === 0) return [];
+
+                // Fetch users who have recent stories (within last 24 hours)
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                const storiesQuerySnapshot = await firestoreDB.collection('stories')
+                    .where('userId', 'in', userIdsToFetchStories.slice(0,10)) // Firestore 'in' query limit is 10
+                    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(twentyFourHoursAgo))
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                const storyUserIds = new Set();
+                storiesQuerySnapshot.docs.forEach(doc => storyUserIds.add(doc.data().userId));
+
+                if (storyUserIds.size === 0) return [];
+
+                const usersWithStoriesSnapshot = await firestoreDB.collection('users')
+                    .where(firebase.firestore.FieldPath.documentId(), 'in', Array.from(storyUserIds))
+                    .get();
+
+                return usersWithStoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            },
+            getUserStories: async (userId) => {
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                const snapshot = await firestoreDB.collection('stories')
+                    .where('userId', '==', userId)
+                    .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(twentyFourHoursAgo))
+                    .orderBy('createdAt', 'asc') // Oldest first for viewing order
+                    .get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            },
+            createStory: async (userId, { contentUrl, contentType }) => {
+                 return firestoreDB.collection('stories').add({
+                    userId,
+                    contentUrl,
+                    contentType,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    // expiresAt could be set here or via Cloud Function
+                });
+            }
+        };
+
+        // --- React Components (largely similar, but data fetching and actions change) ---
+
+        // Utility to format time
+        const timeSince = (timestamp) => {
+            if (!timestamp) return "some time ago";
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp); // Handle Firebase Timestamp or ISO string
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + "y";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + "mo";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + "d";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + "h";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + "m";
+            return Math.floor(seconds) + "s";
+        };
+
+        const Modal = ({ children, title, onClose }) => { /* ... (same as before) ... */ };
+        const Loader = () => <div className="loader"></div>;
+
+        const Header = ({ onNavigate }) => {
+            const { showModal } = React.useContext(AppContext);
+            const handleCreatePost = () => {
+                showModal(<UploadModal type="post" onClose={() => showModal(null)} />);
+            };
+            return (
+                <div className="app-header">
+                    <div className="app-header-logo" onClick={() => onNavigate('home')}>InstaRetro</div>
+                    <div className="app-header-actions">
+                        <span className="icon" onClick={() => onNavigate('search')}>🔍</span>
+                        <span className="icon" onClick={handleCreatePost}>⊕</span>
+                        <span className="icon" onClick={() => onNavigate('messagesList')}>💬</span> {/* Changed to messagesList */}
+                    </div>
+                </div>
+            );
+        };
+
+        const StoryItem = ({ user, onStoryClick }) => { /* ... (same as before) ... */ };
+
+        const StoriesBar = () => {
+            const { currentUser, showModal } = React.useContext(AppContext);
+            const [storyUsers, setStoryUsers] = React.useState([]);
+
+            React.useEffect(() => {
+                if (currentUser) {
+                    firebaseService.getStoriesForFeed(currentUser.uid).then(setStoryUsers);
+                }
+            }, [currentUser]);
+
+            const handleStoryClick = async (userId) => {
+                const userStories = await firebaseService.getUserStories(userId);
+                if (userStories && userStories.length > 0) {
+                    const user = storyUsers.find(u => u.id === userId) || await firebaseService.getUserProfileById(userId);
+                    showModal(<StoryViewer stories={userStories} user={user} onClose={() => showModal(null)} />);
+                } else {
+                    alert("No stories for this user or feature in progress.");
+                }
+            };
+
+            const handleAddOwnStory = () => {
+                 showModal(<UploadModal type="story" onClose={() => showModal(null)} />);
+            };
+
+            if (!currentUser) return null;
+
+            return (
+                <div className="stories-bar">
+                    <div className="story-item" onClick={handleAddOwnStory} title="Add to your story">
+                         <div className="story-avatar" style={{backgroundImage: 'none', border: '2px dashed var(--accent-color)'}}>
+                            <span style={{fontSize:'24px', color:'var(--accent-color)'}}>+</span>
+                        </div>
+                        <span className="story-username">Your Story</span>
+                    </div>
+                    {storyUsers.map(user => <StoryItem key={user.id} user={user} onStoryClick={handleStoryClick}/>)}
+                </div>
+            );
+        };
+
+        const StoryViewer = ({ stories, user, onClose }) => { /* ... (same as before, ensure timestamp from Firebase is handled) ... */ };
+
+        const Post = ({ postData, onNavigate }) => {
+            const { currentUser, showModal, refreshFeed } = React.useContext(AppContext);
+            const [post, setPost] = React.useState(postData);
+
+            const handleToggleLike = async () => {
+                if (!currentUser) return;
+                const result = await firebaseService.toggleLikePost(post.id, currentUser.uid);
+                if (result) {
+                    setPost(prev => ({ ...prev, isLiked: result.liked, likesCount: result.newLikesCount }));
+                }
+            };
+             const handleToggleSave = async () => {
+                if (!currentUser) return;
+                const result = await firebaseService.toggleSavePost(post.id, currentUser.uid);
+                if (result) {
+                    setPost(prev => ({ ...prev, isSaved: result.saved }));
+                }
+            };
+
+            const handleCommentClick = () => {
+                showModal(<CommentsModal postId={post.id} onClose={() => { showModal(null); /* No need for full refreshFeed if counts update locally */ }} />);
+            };
+            const handlePostOptions = () => { alert(`Post Options for Post ID ${post.id}:\n- Report\n- Copy Link\n (Not implemented)`);};
+
+            return (
+                <div className="post-item">
+                    <div className="post-header">
+                        <img className="post-user-avatar" src={post.user_profile_pic_url || DEFAULT_USER_PIC} alt={post.user_username} onClick={() => onNavigate('profile', { username: post.user_username })}/>
+                        <div>
+                            <span className="post-username" onClick={() => onNavigate('profile', { username: post.user_username })}>{post.user_username}</span>
+                            {post.location && <div className="post-location">{post.location}</div>}
+                        </div>
+                        <span className="post-options icon" onClick={handlePostOptions}>•••</span>
+                    </div>
+                    <div className="post-media-container" onDoubleClick={handleToggleLike}>
+                        {post.contentType === 'video' ? (
+                            <video controls src={post.contentUrl} poster={post.thumbnailUrl || post.contentUrl} type="video/mp4" />
+                        ) : (
+                            <img src={post.contentUrl} alt={post.caption || 'Post image'} />
+                        )}
+                    </div>
+                    <div className="post-actions">
+                        <span className={`icon ${post.isLiked ? 'liked' : ''}`} onClick={handleToggleLike}>❤️</span>
+                        <span className="icon" onClick={handleCommentClick}>💬</span>
+                        <span className="icon" onClick={() => alert('Share feature coming soon!')}>➢</span>
+                        <span className={`icon icon-save ${post.isSaved ? 'active' : ''}`} onClick={handleToggleSave}>🔖</span>
+                    </div>
+                    <div className="post-stats">
+                        {post.likesCount > 0 && <span className="likes">{post.likesCount} likes</span>}
+                    </div>
+                    <div className="post-caption">
+                        <span className="username" onClick={() => onNavigate('profile', { username: post.user_username })}>{post.user_username}</span>
+                        {post.caption}
+                    </div>
+                    {post.commentsCount > 0 &&
+                        <div className="post-comments-link" onClick={handleCommentClick}>View all {post.commentsCount} comments</div>
+                    }
+                    <div className="post-timestamp">{timeSince(post.createdAt)} ago</div>
+                </div>
+            );
+        };
+
+        const FeedView = ({ onNavigate }) => {
+            const { posts, isLoadingFeed } = React.useContext(AppContext);
+            if (isLoadingFeed) return <Loader />;
+            if (!posts || posts.length === 0) {
+                return <div style={{textAlign: 'center', padding: '30px', color: '#777'}}>No posts yet. Follow some users or create your first post!</div>;
+            }
+            return (
+                <div className="feed-container">
+                    {posts.map(post => <Post key={post.id} postData={post} onNavigate={onNavigate} />)}
+                </div>
+            );
+        };
+
+        const CommentsModal = ({ postId, onClose }) => {
+            const { currentUser } = React.useContext(AppContext);
+            const [comments, setComments] = React.useState([]);
+            const [newComment, setNewComment] = React.useState('');
+            const [isLoading, setIsLoading] = React.useState(true);
+            const commentsListRef = React.useRef(null);
+
+            React.useEffect(() => {
+                setIsLoading(true);
+                const unsubscribe = firebaseService.getComments(postId, (fetchedComments) => {
+                    setComments(fetchedComments);
+                    setIsLoading(false);
+                });
+                return () => unsubscribe(); // Cleanup listener
+            }, [postId]);
+
+            React.useEffect(() => { if (commentsListRef.current) commentsListRef.current.scrollTop = commentsListRef.current.scrollHeight; }, [comments]);
+
+            const handleAddComment = async (e) => {
+                e.preventDefault();
+                if (!newComment.trim() || !currentUser) return;
+                const tempCommentText = newComment; // Store before clearing
+                setNewComment(''); // Optimistic UI update
+                try {
+                    await firebaseService.addComment(postId, currentUser.uid, tempCommentText.trim());
+                    // Real-time listener will update the comments list
+                } catch (error) {
+                    console.error("Error posting comment:", error);
+                    alert("Error posting comment.");
+                    setNewComment(tempCommentText); // Revert input if error
+                }
+            };
+             return ( /* ... (same modal structure, but data comes from listener) ... */
+                <Modal title="Comments" onClose={onClose}>
+                    <div className="comments-modal">
+                        <div className="comments-list" ref={commentsListRef}>
+                            {isLoading && <Loader />}
+                            {!isLoading && comments.length === 0 && <p style={{textAlign: 'center', color: '#888'}}>No comments yet.</p>}
+                            {comments.map(comment => (
+                                <div key={comment.id} className="comment-item">
+                                    <img src={comment.user_profile_pic_url || DEFAULT_USER_PIC} alt={comment.user_username} />
+                                    <div>
+                                        <div className="comment-text-container">
+                                            <span className="username">{comment.user_username}</span>
+                                            <span>{comment.text}</span>
+                                        </div>
+                                        <span className="comment-timestamp">{timeSince(comment.createdAt)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {currentUser && (
+                            <form onSubmit={handleAddComment} className="comment-input-area">
+                                <img src={currentUser.profilePicUrl || DEFAULT_USER_PIC} alt="You" style={{width: '32px', height: '32px', borderRadius: '50%', marginRight: '10px'}}/>
+                                <input
+                                    type="text" className="form-input" placeholder="Add a comment..."
+                                    value={newComment} onChange={(e) => setNewComment(e.target.value)}
+                                />
+                                <button type="submit" className="button button-primary" disabled={!newComment.trim()}>Post</button>
+                            </form>
+                        )}
+                    </div>
+                 </Modal>
+            );
+        };
+
+        const ProfileView = ({ username: profileUsername, onNavigate }) => {
+            const { currentUser, showModal, setCurrentUserGlobally } = React.useContext(AppContext);
+            const [profileData, setProfileData] = React.useState(null);
+            const [isLoading, setIsLoading] = React.useState(true);
+            const [activeTab, setActiveTab] = React.useState('grid');
+
+            React.useEffect(() => {
+                setIsLoading(true);
+                firebaseService.getUserProfileByUsername(profileUsername, currentUser?.uid)
+                    .then(data => {
+                        setProfileData(data);
+                        setIsLoading(false);
+                    })
+                    .catch(err => {
+                        console.error("Failed to load profile", err);
+                        setIsLoading(false);
+                    });
+            }, [profileUsername, currentUser]);
+
+            const handleFollowToggle = async () => {
+                if (!currentUser || !profileData || currentUser.uid === profileData.uid) return;
+                const result = await firebaseService.toggleFollowUser(currentUser.uid, profileData.uid);
+                if (result) {
+                    setProfileData(prev => ({
+                        ...prev,
+                        isFollowing: result.isFollowing,
+                        followersCount: result.isFollowing ? (prev.followersCount || 0) + 1 : Math.max(0, (prev.followersCount || 0) - 1)
+                    }));
+                }
+            };
+
+            const handleEditProfile = () => {
+                showModal(<EditProfileModal user={profileData} onClose={async () => {
+                    showModal(null);
+                    // Refresh profile data after edit
+                    const updatedProfile = await firebaseService.getUserProfileByUsername(profileUsername, currentUser?.uid);
+                    setProfileData(updatedProfile);
+                    if (currentUser && currentUser.uid === updatedProfile.uid) {
+                        setCurrentUserGlobally(updatedProfile); // Update global current user if it's their own profile
+                    }
+                }} />);
+            };
+
+            if (isLoading) return <Loader />;
+            if (!profileData) return <div style={{padding:20, textAlign:'center'}}>User not found or error loading profile.</div>;
+
+            const isOwnProfile = currentUser && currentUser.uid === profileData.uid;
+
+            return ( /* ... (same profile structure, but data from Firebase) ... */
+                 <div className="profile-page">
+                    <div className="profile-header">
+                        <img src={profileData.profilePicUrl || DEFAULT_USER_PIC} alt={profileData.username} className="profile-avatar-large" />
+                        <div className="profile-info">
+                            <div style={{display:'flex', alignItems:'center', marginBottom: '10px'}}>
+                               <h2 className="profile-username-large">{profileData.username}</h2>
+                               {isOwnProfile && <span className="icon" style={{fontSize:'18px', marginLeft:'10px', color:'#777'}} onClick={async () => { await firebaseService.signOutUser(); /* App's auth listener will handle UI change */ }}>🚪</span>}
+                            </div>
+                            <div className="profile-actions">
+                                {isOwnProfile ? (
+                                    <button className="button" onClick={handleEditProfile}>Edit Profile</button>
+                                ) : (
+                                    <>
+                                        <button className={`button ${profileData.isFollowing ? '' : 'button-primary'}`} onClick={handleFollowToggle}>
+                                            {profileData.isFollowing ? 'Following' : 'Follow'}
+                                        </button>
+                                        <button className="button" onClick={async () => {
+                                            const chatRoomId = await firebaseService.findOrCreateChatRoom(currentUser.uid, profileData.uid);
+                                            onNavigate('chat', { chatRoomId, otherUser: { uid: profileData.uid, username: profileData.username, profilePicUrl: profileData.profilePicUrl } });
+                                        }}>Message</button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="profile-bio-section">
+                        {profileData.fullname && <div className="fullname">{profileData.fullname}</div>}
+                        {profileData.bio && <p style={{margin: '5px 0 0 0'}}>{profileData.bio}</p>}
+                    </div>
+                    <div className="profile-stats">
+                        <div className="profile-stat-item"><div className="count">{profileData.postsCount || 0}</div><div className="label">posts</div></div>
+                        <div className="profile-stat-item"><div className="count">{profileData.followersCount || 0}</div><div className="label">followers</div></div>
+                        <div className="profile-stat-item"><div className="count">{profileData.followingCount || 0}</div><div className="label">following</div></div>
+                    </div>
+                    <div className="profile-grid-controls">
+                        <span className={`icon ${activeTab === 'grid' ? 'active' : ''}`} onClick={() => setActiveTab('grid')}>▦</span>
+                        {isOwnProfile && <span className={`icon ${activeTab === 'saved' ? 'active' : ''}`} onClick={() => setActiveTab('saved')}>🔖</span>}
+                    </div>
+                    {activeTab === 'grid' && (
+                        <div className="profile-grid">
+                            {profileData.posts && profileData.posts.map(post => (
+                                <div key={post.id} className="profile-grid-item" onClick={() => showModal(<PostDetailModal postId={post.id} onClose={() => showModal(null)} onNavigate={onNavigate} />)}>
+                                    {post.contentType === 'video' ? (
+                                        <video src={post.thumbnailUrl || post.contentUrl} muted playsInline poster={post.thumbnailUrl}></video>
+                                    ) : (<img src={post.thumbnailUrl || post.contentUrl} alt="Post thumbnail" />)}
+                                     <div style={{position:'absolute', bottom:'5px', right:'5px', color:'white', fontSize:'10px', background:'rgba(0,0,0,0.4)', padding:'2px 4px', borderRadius:'3px', display:'flex', alignItems:'center'}}>
+                                        {post.contentType === 'video' && '▶️ '} ❤️ {post.likesCount || 0} 💬 {post.commentsCount || 0}
+                                    </div>
+                                </div>
+                            ))}
+                            {(!profileData.posts || profileData.posts.length === 0) && <p style={{gridColumn: '1 / -1', textAlign:'center', padding:'20px', color:'#888'}}>No posts yet.</p>}
+                        </div>
+                    )}
+                    {isOwnProfile && activeTab === 'saved' && <div style={{padding: '20px', textAlign: 'center'}}>Saved Posts (Not Implemented Yet - Requires fetching saved_posts collection)</div>}
+                </div>
+            );
+        };
+
+        const PostDetailModal = ({ postId, onClose, onNavigate }) => { /* ... (Needs specific post fetch logic from Firebase) ... */
+            const [postDetail, setPostDetail] = React.useState(null);
+            const { currentUser } = React.useContext(AppContext);
+
+            React.useEffect(() => {
+                 // Simplified fetch, ideally getPostById(postId, currentUserId)
+                firebaseService.getPosts(currentUser?.uid).then(allPosts => {
+                    const foundPost = allPosts.find(p => p.id === postId); // This is inefficient for many posts
+                    setPostDetail(foundPost);
+                });
+            }, [postId, currentUser]);
+
+            if (!postDetail) return <Modal title="Loading..." onClose={onClose}><Loader /></Modal>;
+            return (
+                <Modal title="" onClose={onClose}>
+                    <div style={{maxHeight: '80vh', overflowY: 'auto'}}>
+                        <Post postData={postDetail} onNavigate={onNavigate} />
+                    </div>
+                </Modal>
+            );
+        };
+
+        const EditProfileModal = ({ user, onClose }) => {
+            const { currentUser, setCurrentUserGlobally } = React.useContext(AppContext);
+            const [fullname, setFullname] = React.useState(user.fullname || '');
+            const [bio, setBio] = React.useState(user.bio || '');
+            const [profilePicFile, setProfilePicFile] = React.useState(null);
+            const [profilePicPreview, setProfilePicPreview] = React.useState(user.profilePicUrl || DEFAULT_USER_PIC);
+            const [isSaving, setIsSaving] = React.useState(false);
+
+            const handleFileChange = (e) => { /* ... (same as before) ... */ };
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsSaving(true);
+                let newProfilePicUrl = user.profilePicUrl;
+                if (profilePicFile) {
+                    try {
+                        newProfilePicUrl = await firebaseService.uploadFile(profilePicFile, `profile_pics/${user.uid}`);
+                    } catch (error) {
+                        console.error("Error uploading profile picture:", error);
+                        alert("Failed to upload profile picture.");
+                        setIsSaving(false);
+                        return;
+                    }
+                }
+
+                try {
+                    const updatedUser = await firebaseService.updateUserProfile(user.uid, { fullname, bio, profilePicUrl: newProfilePicUrl });
+                    if (updatedUser && currentUser && currentUser.uid === updatedUser.uid) {
+                        setCurrentUserGlobally(updatedUser);
+                    }
+                    setIsSaving(false);
+                    onClose();
+                } catch (error) {
+                    console.error("Error updating profile:", error);
+                    alert("Failed to update profile.");
+                    setIsSaving(false);
+                }
+            };
+            return ( /* ... (same structure, but handleSubmit uses Firebase) ... */
+                 <Modal title="Edit Profile" onClose={onClose}>
+                    <form onSubmit={handleSubmit}>
+                        <div style={{textAlign:'center', marginBottom:'15px'}}>
+                            <img src={profilePicPreview} alt="Profile" style={{width:'80px', height:'80px', borderRadius:'50%', objectFit:'cover', border:'2px solid var(--border-color)'}}/>
+                            <input type="file" id="profilePicUpload" accept="image/*" onChange={handleFileChange} style={{display:'none'}}/>
+                            <label htmlFor="profilePicUpload" style={{display:'block', color: 'var(--accent-color)', cursor:'pointer', fontSize:'13px', marginTop:'5px'}}>Change Photo</label>
+                        </div>
+                        <label htmlFor="fullname">Full Name</label>
+                        <input id="fullname" type="text" className="form-input" value={fullname} onChange={e => setFullname(e.target.value)} placeholder="Your full name"/>
+                        <label htmlFor="bio">Bio</label>
+                        <textarea id="bio" className="form-textarea" value={bio} onChange={e => setBio(e.target.value)} placeholder="Tell us about yourself..."/>
+                        <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop:'10px'}}>
+                            <button type="button" className="button" onClick={onClose} disabled={isSaving}>Cancel</button>
+                            <button type="submit" className="button button-primary" disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        const UploadModal = ({ type, onClose }) => { // type: 'post' or 'story'
+            const { currentUser, refreshFeed } = React.useContext(AppContext);
+            const [caption, setCaption] = React.useState('');
+            const [location, setLocation] = React.useState(''); // Only for posts
+            const [mediaFile, setMediaFile] = React.useState(null);
+            const [mediaPreview, setMediaPreview] = React.useState(null);
+            const [mediaType, setMediaType] = React.useState('image');
+            const [isUploading, setIsUploading] = React.useState(false);
+
+            const handleFileChange = (event) => { /* ... (same as before) ... */ };
+            const handleSubmit = async () => {
+                if (!mediaFile || !currentUser) { alert("Please select a media file."); return; }
+                setIsUploading(true);
+                try {
+                    const contentUrl = await firebaseService.uploadFile(mediaFile, `${type}s/${currentUser.uid}`);
+                    let thumbnailUrl = null;
+                    if (mediaType === 'video') {
+                        // Thumbnail generation client-side is complex. For now, skip or use a placeholder.
+                        // Could upload a specific thumbnail if user provides one.
+                        // Or, use Firebase Cloud Functions to generate thumbnails on upload.
+                    }
+
+                    if (type === 'post') {
+                        await firebaseService.createPost(currentUser.uid, {
+                            contentUrl, contentType: mediaType, thumbnailUrl,
+                            caption, location
+                        });
+                        refreshFeed();
+                    } else if (type === 'story') {
+                        await firebaseService.createStory(currentUser.uid, { contentUrl, contentType: mediaType });
+                        // Optionally refresh stories bar or indicate success
+                    }
+                    setIsUploading(false);
+                    onClose();
+                } catch (error) {
+                    console.error(`Error creating ${type}:`, error);
+                    alert(`Failed to create ${type}.`);
+                    setIsUploading(false);
+                }
+            };
+            return ( /* ... (same structure, but handleSubmit uploads to Firebase storage and creates Firestore doc) ... */
+                 <Modal title={type === 'post' ? "Create New Post" : "Create New Story"} onClose={onClose}>
+                    <div style={{maxHeight: '70vh', overflowY: 'auto', paddingRight: '10px'}}>
+                        {mediaPreview && (
+                            <div style={{marginBottom:'15px', border:'1px solid var(--border-color)', borderRadius:'6px', overflow:'hidden'}}>
+                                {mediaType === 'image' ? (
+                                    <img src={mediaPreview} alt="Preview" style={{width:'100%', display:'block', maxHeight:'300px', objectFit:'contain'}}/>
+                                ) : ( <video src={mediaPreview} controls style={{width:'100%', display:'block', maxHeight:'300px'}}/> )}
+                            </div>
+                        )}
+                        <input type="file" accept="video/*,image/*" onChange={handleFileChange} className="form-input" style={{borderStyle:'dashed', textAlign:'center', padding:'20px 10px'}} />
+                        {type === 'post' && (
+                            <>
+                                <input type="text" className="form-input" placeholder="Write a caption..." value={caption} onChange={(e) => setCaption(e.target.value)} />
+                                <input type="text" className="form-input" placeholder="Add location (optional)" value={location} onChange={(e) => setLocation(e.target.value)} />
+                            </>
+                        )}
+                        <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop:'15px'}}>
+                            <button className="button" onClick={onClose} disabled={isUploading}>Cancel</button>
+                            <button className="button button-primary" onClick={handleSubmit} disabled={!mediaFile || isUploading}>
+                                {isUploading ? 'Sharing...' : 'Share'}
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        };
+
+        const SearchView = ({ onNavigate }) => {
+            const [query, setQuery] = React.useState('');
+            const [userResults, setUserResults] = React.useState([]);
+            const [isLoading, setIsLoading] = React.useState(false);
+
+            const handleSearch = async () => {
+                if (!query.trim()) { setUserResults([]); return; }
+                setIsLoading(true);
+                const users = await firebaseService.searchUsers(query.trim());
+                setUserResults(users);
+                setIsLoading(false);
+            };
+
+            React.useEffect(() => {
+                const timer = setTimeout(() => { if (query) handleSearch(); else setUserResults([]); }, 500);
+                return () => clearTimeout(timer);
+            }, [query]);
+
+            return ( /* ... (same structure, search uses Firebase) ... */
+                <div className="search-view">
+                    <div className="search-bar">
+                        <input type="text" placeholder="Search for users..." value={query} onChange={(e) => setQuery(e.target.value)} />
+                    </div>
+                    {isLoading && <Loader />}
+                    {!isLoading && userResults.length > 0 && (
+                        <div className="search-results">
+                            {userResults.map(user => (
+                                <div key={user.id} className="search-user-item" onClick={() => onNavigate('profile', { username: user.username })}>
+                                    <img src={user.profilePicUrl || DEFAULT_USER_PIC} alt={user.username} />
+                                    <div>
+                                        <div className="username">{user.username}</div>
+                                        {user.fullname && <div className="fullname">{user.fullname}</div>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {!isLoading && query && userResults.length === 0 && ( <p style={{textAlign:'center', color:'#888'}}>No results found for "{query}".</p> )}
+                </div>
+            );
+        };
+
+        const ActivityView = ({ onNavigate }) => {
+            const { currentUser, showModal } = React.useContext(AppContext);
+            const [notifications, setNotifications] = React.useState([]);
+            const [isLoading, setIsLoading] = React.useState(true);
+
+            React.useEffect(() => {
+                if (currentUser) {
+                    setIsLoading(true);
+                    const unsubscribe = firebaseService.getNotifications(currentUser.uid, (data) => {
+                        setNotifications(data);
+                        setIsLoading(false);
+                        // Optionally mark some as read
+                        // const unreadIds = data.filter(n => !n.isRead).map(n => n.id);
+                        // if(unreadIds.length > 0) firebaseService.markNotificationsAsRead(currentUser.uid, unreadIds.slice(0,5)); // Mark first 5 unread
+                    });
+                    return () => unsubscribe();
+                } else { setIsLoading(false); }
+            }, [currentUser]);
+
+            const getNotificationMessage = (n) => { /* ... (same as before) ... */ };
+            const handleNotificationClick = (n) => {
+                 if (n.type === 'follow' || (n.type === 'mention' && !n.postId)) { // Navigate to user profile
+                    onNavigate('profile', { username: n.actor_username });
+                } else if (n.postId) { // Navigate to post (e.g., via modal)
+                    showModal(<PostDetailModal postId={n.postId} onClose={() => showModal(null)} onNavigate={onNavigate} />);
+                }
+                // Mark as read if clicked (and not already read)
+                if (!n.isRead) firebaseService.markNotificationsAsRead(currentUser.uid, [n.id]);
+            };
+
+            if (isLoading) return <Loader />;
+            if (!currentUser) return <div style={{padding:20, textAlign:'center'}}>Please log in to see your activity.</div>;
+            if (notifications.length === 0) return <div style={{padding:20, textAlign:'center', color:'#777'}}>No new activity.</div>;
+
+            return ( /* ... (same structure, data from Firebase listener) ... */
+                <div className="activity-view">
+                    <h3 style={{padding:'0 15px 10px', fontSize:'18px', borderBottom:'1px solid var(--border-color)', margin:0}}>Activity</h3>
+                    {notifications.map(n => (
+                        <div key={n.id} className={`activity-item ${n.isRead ? '' : 'unread'}`}
+                             style={{backgroundColor: n.isRead ? 'transparent' : '#f0f8ff'}} /* Visual cue for unread */
+                             onClick={() => handleNotificationClick(n)}>
+                            <img src={n.actor_profile_pic_url || DEFAULT_USER_PIC} alt={n.actor_username} />
+                            <div className="activity-text">
+                                {getNotificationMessage(n)}
+                                <span className="activity-timestamp">{timeSince(n.createdAt)}</span>
+                            </div>
+                            {n.post_thumbnail_url && (<img src={n.post_thumbnail_url} alt="Post thumbnail" className="post-thumbnail" />)}
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const MessagesListView = ({ onNavigate }) => {
+            const { currentUser } = React.useContext(AppContext);
+            const [chatRooms, setChatRooms] = React.useState([]);
+            const [isLoading, setIsLoading] = React.useState(true);
+
+            React.useEffect(() => {
+                if (currentUser) {
+                    setIsLoading(true);
+                    const unsubscribe = firebaseService.getChatRoomsForUser(currentUser.uid, (rooms) => {
+                        setChatRooms(rooms);
+                        setIsLoading(false);
+                    });
+                    return () => unsubscribe();
+                } else { setIsLoading(false); }
+            }, [currentUser]);
+
+            if (isLoading) return <Loader />;
+            if (!currentUser) return <div style={{padding:20, textAlign:'center'}}>Log in to see messages.</div>;
+
+            return (
+                <div className="messages-list-view">
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'15px'}}>
+                         <h3 style={{fontSize:'18px', margin:0}}>Messages</h3>
+                         {/* New message icon/functionality can be added here - e.g., search user to start chat */}
+                    </div>
+                    {chatRooms.length === 0 && <p style={{textAlign:'center', color:'#777'}}>No conversations yet. Start one from a user's profile!</p>}
+                    {chatRooms.map(room => (
+                        <div key={room.id} className="message-user-item" onClick={() => onNavigate('chat', { chatRoomId: room.id, otherUser: room.otherUser })}>
+                            <img src={room.otherUser?.profilePicUrl || DEFAULT_USER_PIC} alt={room.otherUser?.username} />
+                            <div className="message-info">
+                                <div className="username">{room.otherUser?.username || 'User'}</div>
+                                <div className="last-message">{room.lastMessageText || 'No messages yet...'}</div>
+                            </div>
+                            <span className="message-timestamp">{timeSince(room.lastMessageTimestamp)}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const ChatView = ({ chatRoomId, otherUser, onNavigate }) => {
+            const { currentUser } = React.useContext(AppContext);
+            const [messages, setMessages] = React.useState([]);
+            const [newMessage, setNewMessage] = React.useState('');
+            const [isLoading, setIsLoading] = React.useState(true);
+            const messagesEndRef = React.useRef(null); // For auto-scrolling
+
+            React.useEffect(() => {
+                setIsLoading(true);
+                const unsubscribe = firebaseService.getMessagesForChatRoom(chatRoomId, (fetchedMessages) => {
+                    setMessages(fetchedMessages);
+                    setIsLoading(false);
+                });
+                return () => unsubscribe();
+            }, [chatRoomId]);
+
+            React.useEffect(() => { // Auto-scroll to bottom
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, [messages]);
+
+            const handleSendMessage = async (e) => {
+                e.preventDefault();
+                if (!newMessage.trim() || !currentUser) return;
+                const tempMessageText = newMessage;
+                setNewMessage('');
+                try {
+                    await firebaseService.sendMessage(chatRoomId, currentUser.uid, tempMessageText.trim());
+                } catch (error) {
+                    console.error("Error sending message:", error);
+                    alert("Failed to send message.");
+                    setNewMessage(tempMessageText); // Revert if failed
+                }
+            };
+
+            if (isLoading && messages.length === 0) return (
+                <div className="chat-view">
+                    <div className="chat-header">
+                        <span className="chat-back-button icon" onClick={() => onNavigate('messagesList')}>‹</span>
+                        {otherUser && <img src={otherUser.profilePicUrl || DEFAULT_USER_PIC} alt={otherUser.username} />}
+                        <span className="username">{otherUser ? otherUser.username : 'Chat'}</span>
+                    </div>
+                    <Loader />
+                </div>
+            );
+
+            return (
+                <div className="chat-view">
+                    <div className="chat-header">
+                        <span className="chat-back-button icon" onClick={() => onNavigate('messagesList')}>‹</span> {/* Back arrow */}
+                        {otherUser && <img src={otherUser.profilePicUrl || DEFAULT_USER_PIC} alt={otherUser.username} />}
+                        <span className="username">{otherUser ? otherUser.username : 'Chat'}</span>
+                    </div>
+                    <div className="chat-messages">
+                        {/* This div is for the scroll anchor at the actual bottom, before messages are reversed */}
+                        <div style={{ float:"left", clear: "both" }} ref={messagesEndRef}></div>
+                        {messages.map(msg => (
+                            <div key={msg.id} className={`chat-message ${msg.senderId === currentUser?.uid ? 'sent' : 'received'}`}>
+                                <div className="chat-message-bubble">{msg.text}</div>
+                                {/* <span className="chat-message-timestamp">{timeSince(msg.createdAt)}</span> */}
+                            </div>
+                        ))}
+                        {messages.length === 0 && !isLoading && <p style={{textAlign:'center', color:'#888', alignSelf:'center'}}>No messages yet. Say hi!</p>}
+                    </div>
+                    <form onSubmit={handleSendMessage} className="chat-input-area">
+                        <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Type a message..."
+                            value={newMessage}
+                            onChange={e => setNewMessage(e.target.value)}
+                        />
+                        <button type="submit" className="button button-primary" disabled={!newMessage.trim()}>Send</button>
+                    </form>
+                </div>
+            );
+        };
+
+        const NavigationBar = ({ activeView, onNavigate, currentUser }) => {
+            const { showModal } = React.useContext(AppContext);
+             const icons = { home: '🏠', search: '🔍', reels: '🎞️', activity: '❤️', profile: '👤' };
+            return ( /* ... (same structure, ensure reels uses UploadModal for post) ... */
+                <nav className="nav-bar">
+                    <div className="nav-item" onClick={() => onNavigate('home')}><span className={`icon ${activeView === 'home' ? 'active' : ''}`}>{icons.home}</span></div>
+                    <div className="nav-item" onClick={() => onNavigate('search')}><span className={`icon ${activeView === 'search' ? 'active' : ''}`}>{icons.search}</span></div>
+                    <div className="nav-item" onClick={() => showModal(<UploadModal type="post" onClose={() => showModal(null)} />)}>
+                        <span className={`icon reels-icon`}>⊕</span>
+                    </div>
+                    <div className="nav-item" onClick={() => onNavigate('activity')}><span className={`icon ${activeView === 'activity' ? 'active' : ''}`}>{icons.activity}</span></div>
+                    <div className="nav-item" onClick={() => onNavigate('profile', { username: currentUser?.username })}>
+                        {currentUser && currentUser.profilePicUrl ? (
+                             <span className={`icon profile-icon ${activeView === 'profile' ? 'active' : ''}`}><img src={currentUser.profilePicUrl} alt="Profile"/></span>
+                        ) : (<span className={`icon ${activeView === 'profile' ? 'active' : ''}`}>{icons.profile}</span>)}
+                    </div>
+                </nav>
+            );
+        };
+
+        const LoginView = ({ onLoginSuccess }) => {
+            const [email, setEmail] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [username, setUsername] = React.useState(''); // For signup
+            const [fullname, setFullname] = React.useState(''); // For signup
+            const [isLogin, setIsLogin] = React.useState(true); // true for login, false for signup
+            const [error, setError] = React.useState('');
+            const [isLoading, setIsLoading] = React.useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setError('');
+                setIsLoading(true);
+                try {
+                    if (isLogin) {
+                        await firebaseService.signInWithEmail(email, password);
+                        // onLoginSuccess will be called by onAuthStateChanged listener in App
+                    } else {
+                        if (!username.trim() || !fullname.trim()) {
+                            setError("Username and Full Name are required for signup.");
+                            setIsLoading(false);
+                            return;
+                        }
+                        await firebaseService.signUpWithEmail(email, password, username, fullname);
+                        // onLoginSuccess will be called by onAuthStateChanged listener
+                    }
+                } catch (err) {
+                    setError(err.message || (isLogin ? "Login failed." : "Signup failed."));
+                }
+                setIsLoading(false);
+            };
+
+            return (
+                <div className="login-view">
+                    <div className="login-logo">InstaRetro</div>
+                    <form onSubmit={handleSubmit} className="login-form" style={{width: '80%'}}>
+                        {error && <p className="login-error">{error}</p>}
+                        {!isLogin && (
+                            <>
+                                <input type="text" className="form-input" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required={!isLogin} />
+                                <input type="text" className="form-input" placeholder="Full Name" value={fullname} onChange={e => setFullname(e.target.value)} required={!isLogin} />
+                            </>
+                        )}
+                        <input type="email" className="form-input" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+                        <input type="password" className="form-input" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                        <button type="submit" className="button button-primary" disabled={isLoading}>
+                            {isLoading ? 'Processing...' : (isLogin ? 'Log In' : 'Sign Up')}
+                        </button>
+                        <p style={{fontSize: '13px', textAlign: 'center', color: '#555', marginTop: '20px'}}>
+                            {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+                            <a href="#" onClick={(e) => { e.preventDefault(); setIsLogin(!isLogin); setError(''); }} style={{color: 'var(--accent-color)', fontWeight:'bold'}}>
+                                {isLogin ? 'Sign Up' : 'Log In'}
+                            </a>
+                        </p>
+                    </form>
+                </div>
+            );
+        };
+
+
+        const App = () => {
+            const [currentUser, setCurrentUser] = React.useState(null); // This will store our app-specific user profile
+            const [firebaseUser, setFirebaseUser] = React.useState(null); // Raw Firebase auth user
+            const [isLoadingUser, setIsLoadingUser] = React.useState(true);
+            const [posts, setPosts] = React.useState([]);
+            const [isLoadingFeed, setIsLoadingFeed] = React.useState(true);
+            const [currentView, setCurrentView] = React.useState('home');
+            const [viewParams, setViewParams] = React.useState({});
+            const [activeModal, setActiveModal] = React.useState(null);
+
+            React.useEffect(() => {
+                if (!firebaseAuth) { // Firebase might not be initialized yet
+                    const timer = setTimeout(() => setIsLoadingUser(false), 2000); // Give it a moment, then assume error
+                    return () => clearTimeout(timer);
+                }
+                const unsubscribe = firebaseService.onAuthStateChangedListener(async (user) => {
+                    setFirebaseUser(user);
+                    if (user) {
+                        const userProfile = await firebaseService.getUserProfileById(user.uid);
+                        setCurrentUser(userProfile);
+                        fetchFeed(userProfile); // Fetch feed for the logged-in user
+                    } else {
+                        setCurrentUser(null);
+                        setPosts([]); // Clear posts on logout
+                        setIsLoadingFeed(false);
+                    }
+                    setIsLoadingUser(false);
+                });
+                return unsubscribe; // Cleanup listener on component unmount
+            }, []);
+
+            const fetchFeed = async (userProfile) => {
+                if (!userProfile) { setIsLoadingFeed(false); return; }
+                setIsLoadingFeed(true);
+                try {
+                    const fetchedPosts = await firebaseService.getPosts(userProfile.uid);
+                    setPosts(fetchedPosts);
+                } catch (error) { console.error("Error fetching feed:", error); }
+                setIsLoadingFeed(false);
+            };
+
+            const handleNavigate = (view, params = {}) => { /* ... (same as before) ... */ };
+
+            const appContextValue = {
+                currentUser, // App-specific user profile
+                firebaseUser, // Raw Firebase auth user
+                setCurrentUserGlobally: setCurrentUser, // For profile edit to update header/nav,
+                posts,
+                isLoadingFeed,
+                refreshFeed: () => { if(currentUser) fetchFeed(currentUser); },
+                showModal: setActiveModal,
+                onNavigate: handleNavigate,
+            };
+
+            if (isLoadingUser) {
+                return <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100%'}}><Loader /></div>;
+            }
+            if (!firebaseApp) { // Check if Firebase itself failed to load (handled by global error message too)
+                 return <div style={{padding:20, textAlign:'center'}}>Critical Error: Backend services unavailable.</div>;
+            }
+
+            if (!currentUser && firebaseUser) { // Firebase user exists but profile not loaded yet or doesn't exist (e.g. mid-signup)
+                // This state might happen briefly or if profile creation failed.
+                // Could show a specific loading or error, or let LoginView handle it if signup form shows.
+                // For now, LoginView will show if currentUser is null.
+            }
+
+            if (!currentUser) { // No logged-in user or profile not loaded
+                return <LoginView />; // onLoginSuccess is implicitly handled by onAuthStateChanged
+            }
+
+            const renderView = () => {
+                switch (currentView) {
+                    case 'home': return <FeedView onNavigate={handleNavigate} />;
+                    case 'search': return <SearchView onNavigate={handleNavigate} />;
+                    case 'activity': return <ActivityView onNavigate={handleNavigate} />;
+                    case 'messagesList': return <MessagesListView onNavigate={handleNavigate} />;
+                    case 'chat': return <ChatView chatRoomId={viewParams.chatRoomId} otherUser={viewParams.otherUser} onNavigate={handleNavigate} />;
+                    case 'profile': return <ProfileView username={viewParams.username || currentUser.username} onNavigate={handleNavigate} />;
+                    default: return <FeedView onNavigate={handleNavigate} />;
+                }
+            };
+
+            return (
+                <AppContext.Provider value={appContextValue}>
+                    <Header onNavigate={handleNavigate} />
+                    <div className="main-content-area">
+                        <StoriesBar />
+                        {renderView()}
+                    </div>
+                    <NavigationBar activeView={currentView} onNavigate={handleNavigate} currentUser={currentUser} />
+                    {activeModal}
+                </AppContext.Provider>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
