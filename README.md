@@ -75,8 +75,8 @@ InstaRetro is a feature-rich, single-page web application designed to mimic the 
 1.  **Clone or Download the Repository:**
     If this were a Git repository:
     ```bash
-    git clone <repository-url>
-    cd instaretro-ultimate-edition
+    git clone <[repository-url](https://github.com/kayung-developer/InstaRetro.git)>
+    cd instaretro
     ```
     Otherwise, simply download the `index.html` file.
 
